@@ -1,0 +1,84 @@
+﻿@page "/manage-product/{Id:int?}"
+@rendermode InteractiveAuto
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                @if(Id > 0)
+                {
+                    <div class="card-header"><b>Edit</b> Product</div>
+                }
+                else
+                {
+                    <div class="card-header"><b>Add</b> Product</div>
+                }
+                <div class="card-body">
+                    <EditForm Model="ProductModel" OnValidSubmit="HandleSave">
+                        <DataAnnotationsValidator />
+                        
+
+                        <div class="form-group">
+                            <label class="form-label">Product Name</label>
+                            <InputText @bind-Value="ProductModel.Name" class="form-control"></InputText>
+                            <ValidationMessage For="()=>ProductModel.Name"></ValidationMessage>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Product Quantity</label>
+                            <InputNumber @bind-Value="ProductModel.Quantity" class="form-control"></InputNumber>
+                            <ValidationMessage For="()=>ProductModel.Quantity"></ValidationMessage>
+                        </div>
+
+                        <button type="submit" class="btn btn-outline-success mt-4"> Save</button>
+                        <a href="product-list" class="btn btn-outline-primary mt-4">Back</a>
+
+                    </EditForm>
+                </div>
+
+                <div class="card-footer">
+                    Id: @ReturnProduct.Id <br />
+                    Name:@ReturnProduct.Name <br />
+                    Quantity: @ReturnProduct.Quantity
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    public Product ProductModel { get; set; } = new();
+
+    [Parameter] public int Id { get; set; }
+
+    private Product ReturnProduct = new();
+
+    private async Task HandleSave()
+    {
+
+        if (ProductModel.Id > 0)
+        {
+            ReturnProduct = await ProductService.UpdateProductAsync(ProductModel);
+            await js.InvokeVoidAsync("alert", $"Product:\nName: {ReturnProduct.Name}\nId:{ReturnProduct.Quantity}\n updated successfully");
+            NavigationManager.NavigateTo($"product-list");
+        }
+
+        else
+        {
+            ReturnProduct = await ProductService.AddProductAsync(ProductModel);
+            await js.InvokeVoidAsync("alert", $"Product:\nName: {ReturnProduct.Name}\nId:{ReturnProduct.Quantity}\n Added successfully");
+            NavigationManager.NavigateTo($"product-list");
+        }
+
+        ProductModel = new();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id > 0)
+            ProductModel = await ProductService.GetProductByIdAsync(Id);
+    }
+}
